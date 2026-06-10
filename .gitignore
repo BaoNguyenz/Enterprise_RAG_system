@@ -1,0 +1,5 @@
+*.zip
+.env
+RAG1
+sample_data
+*.log

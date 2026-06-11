@@ -85,7 +85,7 @@ def main() -> None:
     print(f"  Documents:     {len(docs)}")
     print(f"  Chunks:        {len(chunks)}")
     print(f"  Avg chunk:     {avg_chunk_size:.0f} chars")
-    print(f"  Vectors:       {info['vectors_count']}")
+    print(f"  Vectors:       {info['points_count']}")
     print(f"  Collection:    {info['name']} ({info['status']})")
     print(f"  Total time:    {total_time:.2f}s")
 

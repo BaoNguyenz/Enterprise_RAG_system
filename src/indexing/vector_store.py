@@ -162,19 +162,20 @@ class VectorStore:
                 ]
             )
 
-        hits = self.client.search(
+        response = self.client.query_points(
             collection_name=self.collection_name,
-            query_vector=query_embedding,
+            query=query_embedding,
             limit=top_k,
             query_filter=query_filter,
             search_params=SearchParams(
                 hnsw_ef=self.hnsw_ef_search,
                 exact=False,
             ),
+            with_payload=True,
         )
 
         results: list[SearchResult] = []
-        for hit in hits:
+        for hit in response.points:
             payload = hit.payload or {}
             chunk = Chunk(
                 content=payload.get("content", ""),
@@ -213,19 +214,20 @@ class VectorStore:
                 ]
             )
 
-        hits = self.client.search(
+        response = self.client.query_points(
             collection_name=self.collection_name,
-            query_vector=embedding,
+            query=embedding,
             limit=top_k,
             query_filter=query_filter,
             search_params=SearchParams(
                 hnsw_ef=self.hnsw_ef_search,
                 exact=False,
             ),
+            with_payload=True,
         )
 
         results: list[SearchResult] = []
-        for hit in hits:
+        for hit in response.points:
             payload = hit.payload or {}
             chunk = Chunk(
                 content=payload.get("content", ""),
@@ -282,6 +284,5 @@ class VectorStore:
         return {
             "name": self.collection_name,
             "points_count": info.points_count,
-            "vectors_count": info.vectors_count,
             "status": info.status.value,
         }

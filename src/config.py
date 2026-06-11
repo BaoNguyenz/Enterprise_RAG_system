@@ -43,9 +43,9 @@ class Settings(BaseSettings):
     neo4j_password: str = "password123"
 
     # --- HNSW Parameters ---
-    hnsw_m: int = 32
-    hnsw_ef_construct: int = 200
-    hnsw_ef_search: int = 100
+    hnsw_m: int = 32 # số cạnh tối đa mà mỗi node được kết nối tới khi xây dựng đồ thị
+    hnsw_ef_construct: int = 200 # độ rộng của tầng khi xây dựng đồ thị
+    hnsw_ef_search: int = 100 # độ rộng của tầng khi tìm kiếm
 
     # --- Chunking ---
     chunk_similarity_threshold: float = 0.75

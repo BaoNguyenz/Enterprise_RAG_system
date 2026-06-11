@@ -50,3 +50,5 @@ sample_data/
 
 # Neo4j data export (can be large)
 # neo4j_dump/
+
+data/

@@ -1,6 +1,37 @@
 # Enterprise RAG System for TechDocs Inc.
 
+<p align="left">
+  <a href="#-evaluation-metrics--performance">
+    <img src="https://img.shields.io/badge/Context_Relevance-0.4130-green" alt="Context Relevance">
+  </a>
+  <a href="#-evaluation-metrics--performance">
+    <img src="https://img.shields.io/badge/Faithfulness-83.3%25-brightgreen" alt="Answer Faithfulness">
+  </a>
+  <a href="#-evaluation-metrics--performance">
+    <img src="https://img.shields.io/badge/Avg_Latency-4.91s-orange" alt="Average Latency">
+  </a>
+</p>
+
+<p align="left">
+  <a href="#-technology-stack">
+    <img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white" alt="Python">
+  </a>
+  <a href="#-technology-stack">
+    <img src="https://img.shields.io/badge/FastAPI-0.100%2B-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  </a>
+  <a href="#-technology-stack">
+    <img src="https://img.shields.io/badge/Qdrant-Vector_DB-red" alt="Qdrant">
+  </a>
+  <a href="#-technology-stack">
+    <img src="https://img.shields.io/badge/Neo4j-Graph_DB-008CC1?logo=neo4j&logoColor=white" alt="Neo4j">
+  </a>
+  <a href="#-technology-stack">
+    <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?logo=openai&logoColor=white" alt="OpenAI">
+  </a>
+</p>
+
 An advanced, production-grade Retrieval-Augmented Generation (RAG) system designed to solve search challenges in large technical repositories. The system features semantic chunking, hybrid search (Vector + BM25 with RRF), query transformation (HyDE & Decomposition), post-retrieval processing (Cross-Encoder Reranker & MMR), and GraphRAG (Neo4j).
+
 
 ---
 

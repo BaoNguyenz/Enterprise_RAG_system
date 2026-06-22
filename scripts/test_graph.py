@@ -108,7 +108,8 @@ def main() -> None:
 
         print(f"  Time: {elapsed:.2f}s  |  {len(results)} results")
         for r in results[:3]:
-            print(f"    [{r.source.value}] {r.chunk.content}")
+            content = r.chunk.content.replace("\n", " ").encode("ascii", "replace").decode("ascii")
+            print(f"    [{r.source.value}] {content}")
         print()
 
     # ── TEST 3: Schema inspection ─────────────────────────────────────────

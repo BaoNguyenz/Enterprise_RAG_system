@@ -61,7 +61,7 @@ def build_components():
 def print_results(label, results, max_show=10):
     print(f"  -- {label} ({len(results)} results) --")
     for i, r in enumerate(results[:max_show]):
-        preview = r.chunk.content[:80].replace("\n", " ")
+        preview = r.chunk.content[:80].replace("\n", " ").encode("ascii", "replace").decode("ascii")
         print(
             f"  [{i+1:2d}] score={r.score:7.4f}  "
             f"doc={r.chunk.doc_id:<35}  {preview}..."

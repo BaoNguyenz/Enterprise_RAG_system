@@ -67,6 +67,22 @@ flowchart TD
 
 ---
 
+## 🛠️ Technology Stack
+
+| Layer | Technologies / Frameworks | Purpose |
+|---|---|---|
+| **Programming Language** | Python 3.10+, JavaScript (Vanilla) | Backend logic, pipeline, and interactive web frontend. |
+| **Package Manager** | `uv` (by Astral) | Fast dependency management and virtual environments. |
+| **Vector Database** | Qdrant | Dense vector retrieval using HNSW indexing. |
+| **Graph Database** | Neo4j (GraphRAG) | Knowledge Graph representation of documents, entities, and relations. |
+| **Keyword Search** | BM25 (Rank-BM25) | Classical lexical search for error codes, API URLs, and product catalogs. |
+| **Embeddings & Reranking** | SentenceTransformers (`all-MiniLM-L6-v2`, `cross-encoder/ms-marco-MiniLM-L-6-v2`) | Local embedding generation and Cross-Encoder passage reranking. |
+| **Orchestration / LLM** | OpenAI API (`gpt-4o-mini`), LangChain | Intent routing, query decomposition, HyDE, entity extraction, and final generation. |
+| **Backend Framework** | FastAPI, Uvicorn | Production-ready asynchronous API server. |
+| **Frontend UI** | HTML5, Vanilla CSS (Modern glassmorphic theme), JavaScript | Sleek web chat UI with real-time response streams and source citations. |
+
+---
+
 ## 🌟 Key Features
 
 *   **Semantic Chunking:** Cuts documents based on semantic similarity of contiguous sentences instead of static token length, preserving context boundaries.
@@ -173,6 +189,27 @@ API Documentation will be available at: `http://localhost:8000/docs`
 To chat using the Web UI, open the frontend:
 *   On Windows, simply double-click or open `frontend/index.html` in your browser.
 *   Or serve it locally using any static web server.
+
+---
+
+## 📊 Evaluation Metrics & Performance
+
+The RAG pipeline is evaluated end-to-end using Ragas-like metrics (Context Relevance & Answer Faithfulness) evaluated via LLM-as-a-judge.
+
+### Summary Metrics (Average across 6 benchmark queries)
+
+| Metric | Score / Value | Description |
+|---|---|---|
+| **Context Relevance** | **0.4130** | Assesses how relevant the retrieved context chunks (after Post-Retrieval MMR and Reranking) are to the user query. |
+| **Answer Faithfulness** | **0.8333** | Measures whether all claims in the generated response are strictly grounded in the retrieved context (no hallucinations). |
+| **Average Latency** | **4.91s** | Total end-to-end round trip time. |
+
+### Average Latency Breakdown per Stage
+*   **Query Classification (Router):** `0.000s` (Deterministic/Fast prompt mapping)
+*   **Vector/Keyword Retrieval:** `1.018s` (Qdrant & BM25)
+*   **GraphRAG Search (Neo4j):** `1.509s` (Entity extraction & traversal)
+*   **Post-Retrieval Processing:** `0.583s` (Cross-Encoder & MMR)
+*   **LLM Generation:** `1.803s` (Response generation)
 
 ---
 

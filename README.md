@@ -28,6 +28,9 @@
   <a href="#-technology-stack">
     <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?logo=openai&logoColor=white" alt="OpenAI">
   </a>
+  <a href="#-getting-started">
+    <img src="https://img.shields.io/badge/Docker-Supported-blue?logo=docker&logoColor=white" alt="Docker">
+  </a>
 </p>
 
 An advanced, production-grade Retrieval-Augmented Generation (RAG) system designed to solve search challenges in large technical repositories. The system features semantic chunking, hybrid search (Vector + BM25 with RRF), query transformation (HyDE & Decomposition), post-retrieval processing (Cross-Encoder Reranker & MMR), and GraphRAG (Neo4j).
@@ -147,82 +150,107 @@ flowchart TD
 │   └── orchestrator/           # End-to-end pipeline, evaluator
 ├── scripts/                    # Utilities for seeding, indexing & validation
 ├── frontend/                   # HTML/CSS/JS Chat Interface
-├── app.py                      # FastAPI App definition
-├── main.py                     # CLI Interactive Interface
-├── docker-compose.yml          # Qdrant & Neo4j Docker services
-└── pyproject.toml              # Project dependencies & environment configuration
+├── app.py                      # FastAPI Backend API entrypoint
+├── main.py                     # Interactive terminal CLI entrypoint
+├── Dockerfile                  # Multi-stage slim Docker image configuration
+├── docker-compose.yml          # Orchestrates backend, Qdrant, and Neo4j services
+├── .dockerignore               # Excludes virtual environments and temporary caches from builds
+└── pyproject.toml              # Project metadata & dependencies managed via uv
 ```
 
 ---
 
 ## 🛠️ Getting Started
 
-### Prerequisites
-*   [Python 3.10+](https://www.python.org/downloads/)
-*   [Docker & Docker Compose](https://www.docker.com/products/docker-desktop/)
-*   [uv](https://github.com/astral-sh/uv) (Recommended, Python package manager)
+### 1. Common Pre-requisite: Environment Setup
 
-### 1. Environment Setup
+Before selecting a method below, clone the repository, copy `.env.example` to `.env` and fill in your OpenAI API Key:
 
-Copy `.env.example` to `.env` and fill in your API keys and service credentials:
 ```bash
+# Clone the repository and navigate inside
+git clone https://github.com/BaoNguyenz/Enterprise_RAG_system.git
+cd "Enterprise RAG system"
+
+# Copy environmental file
 cp .env.example .env
 ```
-Ensure `OPENAI_API_KEY` is configured correctly if you plan to run GraphRAG or Query Transformation.
-
-### 2. Start Services (Docker)
-
-Spin up Qdrant Vector Database and Neo4j Graph Database:
-```bash
-docker compose up -d
-```
-*   **Qdrant Console:** `http://localhost:6333/dashboard`
-*   **Neo4j Console:** `http://localhost:7474` (Default username/password: `neo4j` / `password123`)
-
-### 3. Seed & Index Documents
-
-Initialize the database indexes with the following steps:
-
-```bash
-# Step A: Copy sample documents to the active data directory
-uv run python scripts/seed_data.py
-
-# Step B: Run semantic chunking, embedding, and load into Qdrant
-uv run python scripts/index_documents.py
-
-# Step C: Extract entities via LLM and build the Neo4j Graph
-uv run python scripts/build_graph.py
-```
+Fill in the `OPENAI_API_KEY` in `.env`. Ensure other settings are left to defaults for standard setup.
 
 ---
 
-## 🚀 Running the Project
+### 🐳 Method 1: Docker Compose Deployment (Recommended)
+This runs the entire stack inside lightweight Docker containers without needing Python or local packages.
 
-### Interactive CLI
-
-You can chat with the RAG pipeline directly via a terminal console:
+#### 1. Start all containers (Databases + Web Application)
 ```bash
-uv run python main.py
+docker compose up -d
 ```
-*Useful commands inside the CLI:*
-*   `/help` - View commands
-*   `/mode <auto|hybrid|vector|bm25|graph>` - Switch retrieval modes
-*   `/eval` - Evaluate the search quality metrics (generates `evaluation_report.md`)
-*   `/quit` - Exit
+Docker will pull Qdrant, Neo4j, download dependencies using `uv` inside a multi-stage container, download NLTK data, and start the FastAPI server on port `8000`.
 
-### Backend API Server
-
-Start the FastAPI backend:
+#### 2. Seed and Index documents
+Since the databases are blank, you must run the indexing scripts. You can run them directly inside the running container:
 ```bash
-uv run uvicorn app:app --reload
+# A. Seed documents
+docker compose exec web python scripts/seed_data.py
+
+# B. Build hybrid search index (BM25 + Qdrant vectors)
+docker compose exec web python scripts/index_documents.py
+
+# C. Build GraphRAG Knowledge Graph in Neo4j
+docker compose exec web python scripts/build_graph.py
 ```
-API Documentation will be available at: `http://localhost:8000/docs`
 
-### Frontend Web UI
+#### 3. Access Services
+- **Web UI:** `http://localhost:8000` (Directly interactive web chat!)
+- **FastAPI OpenAPI Docs:** `http://localhost:8000/docs`
+- **Qdrant DB Console:** `http://localhost:6333/dashboard`
+- **Neo4j DB Browser:** `http://localhost:7474` (Credentials: `neo4j` / `password123`)
 
-To chat using the Web UI, open the frontend:
-*   On Windows, simply double-click or open `frontend/index.html` in your browser.
-*   Or serve it locally using any static web server.
+To stop the services: `docker compose down`
+
+---
+
+### 💻 Method 2: Local Development (Best for Editing Code)
+This method runs databases in Docker containers but executes Python scripts and the FastAPI web server directly on your host machine.
+
+#### 1. Setup local environment using `uv`
+Ensure you have [Python 3.10+](https://www.python.org/downloads/) and [uv](https://github.com/astral-sh/uv) installed.
+```bash
+# Create local virtual environment and install dependencies
+uv venv
+uv pip install -e ".[dev]"
+```
+
+#### 2. Spin up only the Databases
+```bash
+# Starts Qdrant and Neo4j containers
+docker compose up -d qdrant neo4j
+```
+
+#### 3. Seed & Index documents locally
+```bash
+# Seed documents to directory
+uv run python scripts/seed_data.py
+
+# Load documents to Qdrant & build local BM25 index
+uv run python scripts/index_documents.py
+
+# Extract graph entities & push to Neo4j
+uv run python scripts/build_graph.py
+```
+
+#### 4. Run Interactive Interfaces
+- **Terminal CLI Chat:**
+  ```bash
+  uv run python main.py
+  ```
+  *(Type `/help` to see options, `/mode <mode>` to switch algorithms, `/eval` to benchmark, `/quit` to exit)*
+
+- **Backend API Server (with auto-reload on changes):**
+  ```bash
+  uv run uvicorn app:app --reload
+  ```
+  Open `http://localhost:8000` to interact with the GUI, or visit `http://localhost:8000/docs` to test endpoints.
 
 ---
 

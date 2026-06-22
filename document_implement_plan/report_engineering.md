@@ -25,11 +25,11 @@ graph TD
     Normal --> Graph[GraphRAG Neo4j]
     
     Hybrid --> RRF[RRF Fusion]
-    RRF --> Rerank[Cross-Encoder Reranker]
-    Graph --> Merge[Merge Results]
-    Rerank --> Merge
+    RRF --> Merge[Merge Candidates]
+    Graph --> Merge
     
-    Merge --> MMR[Maximal Marginal Relevance]
+    Merge --> Rerank[Cross-Encoder Reranker]
+    Rerank --> MMR[MMR Diversity Filter]
     MMR --> LLM[LLM Generator]
     LLM --> Answer[Final Answer]
 ```

@@ -73,24 +73,27 @@ flowchart TD
         
         %% Merging & Reranking
         VecDB & BM25DB --> RRF[RRF Fusion]
-        RRF --> |Top 50 Chunks| Rerank[Cross-Encoder Reranker]
-        Rerank --> |Top 20 Chunks| MMR[MMR Diversity Filter]
-        MMR --> |Top 10 Chunks| ContextA[Context A: Detailed Text]
+        RRF --> |Top 50 Chunks| Merge[Merge Candidates]
 
         %% GraphRAG
         Router -- "GraphRAG" --> GraphSearch[GraphRAG Search]
         GraphSearch --> |Entity Linking| GraphDB
-        GraphDB --> ContextB[Context B: Graph Subgraph]
+        GraphDB --> |Top 10 Results| Merge
+
+        %% Post-Retrieval Pipeline
+        Merge --> |50-60 Chunks| Rerank[Cross-Encoder Reranker]
+        Rerank --> |Top 20 Chunks| MMR[MMR Diversity Filter]
+        MMR --> |Top 10 Chunks| Context[Final Context]
     end
 
     subgraph GENERATION ["GENERATION PIPELINE"]
-        ContextA & ContextB --> Assemble[Context & Prompt Assembly]
+        Context --> Assemble[Prompt Assembly]
         Assemble --> LLM[GPT-4o Generator]
         LLM --> Ans([Answer Output])
     end
 
     class VecDB,BM25DB,GraphDB storage;
-    class Chunk,Embed,BuildBM25,GraphExtract,RRF,Rerank,MMR,GraphSearch,Assemble action;
+    class Chunk,Embed,BuildBM25,GraphExtract,RRF,Rerank,MMR,GraphSearch,Assemble,Merge action;
     class Router,QTrans,HyDE,Decompose routing;
     class Q input;
     class LLM,Ans output;

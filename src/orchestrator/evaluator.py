@@ -88,7 +88,7 @@ class Evaluator:
         Returns (score 0-1, reason string).
         """
         context = "\n\n".join(
-            f"[{i+1}] {r.chunk.doc_id}: {r.chunk.content[:300]}"
+            f"[{i+1}] {r.chunk.doc_id}:\n{r.chunk.content}"
             for i, r in enumerate(response.sources[:5])
         )
         prompt = _FAITHFULNESS_PROMPT.format(

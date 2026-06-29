@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enterprise RAG — End-to-End Pipeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #080c18;
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, sans-serif;
+      padding: 48px 24px 80px;
+      min-height: 100vh;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .header h1 {
+      font-size: 2.1rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1 0%, #22d3ee 50%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .header p {
+      color: #64748b;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
+    }
+
+    /* ─── PIPELINE WRAPPER ─── */
+    .pipeline {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    /* ─── PHASE SECTIONS ─── */
+    .phase {
+      border-radius: 18px;
+      padding: 28px 28px 24px;
+      border: 1px solid transparent;
+    }
+    .phase-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .phase-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+    .phase-sub {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: #64748b;
+      margin-left: 6px;
+    }
+
+    /* Phase 1 — green */
+    .p1 { background: rgba(16,185,129,0.04); border-color: rgba(16,185,129,0.2); }
+    .p1 .phase-tag { color: #10b981; }
+    .p1 .phase-title { color: #34d399; }
+
+    /* Storage — indigo */
+    .pdb { background: rgba(99,102,241,0.04); border-color: rgba(99,102,241,0.2); }
+    .pdb .phase-tag { color: #818cf8; }
+    .pdb .phase-title { color: #a5b4fc; }
+
+    /* Docker — cyan */
+    .pdocker { background: rgba(34,211,238,0.04); border-color: rgba(34,211,238,0.2); }
+    .pdocker .phase-tag { color: #22d3ee; }
+    .pdocker .phase-title { color: #67e8f9; }
+
+    /* Phase 2 — amber */
+    .p2 { background: rgba(245,158,11,0.04); border-color: rgba(245,158,11,0.2); }
+    .p2 .phase-tag { color: #f59e0b; }
+    .p2 .phase-title { color: #fbbf24; }
+
+    /* ─── CONNECTOR BETWEEN PHASES ─── */
+    .connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 52px;
+      position: relative;
+    }
+    .connector::before {
+      content: '';
+      position: absolute;
+      left: 50%; top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, #334155, transparent);
+      transform: translateX(-50%);
+    }
+    .connector-dot {
+      z-index: 1;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #0f172a;
+      border: 1.5px solid #475569;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; color: #94a3b8;
+    }
+
+    /* ─── FLOW ROW ─── */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── NODE CARDS ─── */
+    .node {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 12px;
+      padding: 12px 16px;
+      text-align: center;
+      min-width: 110px;
+      transition: all 0.2s ease;
+      cursor: default;
+    }
+    .node:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .node-icon { font-size: 1.5rem; display: block; margin-bottom: 6px; }
+    .node-name { font-size: 0.8rem; font-weight: 600; line-height: 1.35; }
+    .node-detail { font-size: 0.68rem; color: #64748b; margin-top: 3px; line-height: 1.4; font-family: 'JetBrains Mono', monospace; }
+
+    /* ─── ARROWS ─── */
+    .arr { color: #475569; font-size: 1rem; flex-shrink: 0; user-select: none; }
+    .arr-down { text-align: center; color: #475569; font-size: 1rem; margin: 10px 0; }
+    .arr-label {
+      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #6366f1;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      padding: 2px 7px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ─── 3-COLUMN BRANCH ─── */
+    .branch3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .branch-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ─── STORAGE ROW ─── */
+    .db-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+    .node-db {
+      background: rgba(99,102,241,0.08);
+      border-color: rgba(99,102,241,0.3);
+    }
+
+    /* ─── DOCKER ─── */
+    .docker-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .docker-chip {
+      background: rgba(34,211,238,0.08);
+      border: 1px solid rgba(34,211,238,0.3);
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.72rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #22d3ee;
+    }
+    .docker-cmd {
+      font-size: 0.72rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #64748b;
+    }
+
+    /* ─── TWO-PATH GRID ─── */
+    .two-path {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 14px;
+    }
+    .path-box {
+      border-radius: 12px;
+      border: 1px solid;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .path-box-a { border-color: rgba(99,102,241,0.25); background: rgba(99,102,241,0.04); }
+    .path-box-b { border-color: rgba(16,185,129,0.25); background: rgba(16,185,129,0.04); }
+    .path-label {
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .path-label-a { color: #818cf8; }
+    .path-label-b { color: #34d399; }
+
+    .twin-nodes {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    /* ─── POST-RETRIEVAL ─── */
+    .post-box {
+      margin-top: 18px;
+      border: 1px solid rgba(168,85,247,0.2);
+      border-radius: 14px;
+      background: rgba(168,85,247,0.04);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .post-label {
+      font-size: 0.63rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #a78bfa;
+      margin-bottom: 4px;
+    }
+    .node-merge {
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px;
+      padding: 10px 28px;
+      text-align: center;
+    }
+    .node-purple {
+      background: rgba(168,85,247,0.09);
+      border-color: rgba(168,85,247,0.35);
+      min-width: 200px;
+    }
+    .node-answer {
+      background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(34,211,238,0.12));
+      border: 1.5px solid #10b981;
+      border-radius: 12px;
+      padding: 14px 36px;
+      text-align: center;
+    }
+    .node-answer .node-name { font-size: 1rem; color: #34d399; }
+
+    /* ─── BADGE ─── */
+    .badge {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-top: 5px;
+    }
+    .b-blue   { background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); }
+    .b-green  { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+    .b-amber  { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .b-purple { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+    .b-cyan   { background: rgba(34,211,238,0.15); color: #22d3ee; border: 1px solid rgba(34,211,238,0.3); }
+
+    /* ─── METRICS FOOTER ─── */
+    .metrics {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 48px;
+    }
+    .metric-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 14px 22px;
+      text-align: center;
+      min-width: 110px;
+    }
+    .metric-val { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+    .metric-lbl { font-size: 0.68rem; color: #64748b; margin-top: 3px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Enterprise RAG System</h1>
+    <p>End-to-End Pipeline · From Raw Data to User Response</p>
+  </div>
+
+  <div class="pipeline">
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- PHASE 1 — OFFLINE INGESTION               -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="phase p1">
+      <div class="phase-tag">⚙️ Phase 1</div>
+      <div class="phase-title">Offline Data Ingestion <span class="phase-sub">— One-time Developer Setup</span></div>
+
+      <!-- Row 1: docs → seed → chunker -->
+      <div class="flow-row">
+        <div class="node">
+          <span class="node-icon">📄</span>
+          <div class="node-name">Raw Documents</div>
+          <div class="node-detail">20 .md files<br>3 categories</div>
+        </div>
+        <span class="arr">→</span>
+        <span class="arr-label">seed_data.py</span>
+        <span class="arr">→</span>
+        <div class="node">
+          <span class="node-icon">✂️</span>
+          <div class="node-name">Semantic Chunker</div>
+          <div class="node-detail">similarity ≥ 0.75<br>100–1000 tokens</div>
+        </div>
+      </div>
+
+      <div class="arr-down">↓ &nbsp; <span style="font-size:0.65rem;color:#64748b;">index_documents.py &nbsp;|&nbsp; build_graph.py</span></div>
+
+      <!-- Row 2: 3 branches -->
+      <div class="branch3">
+        <div class="branch-col">
+          <div class="node">
+            <span class="node-icon">🔢</span>
+            <div class="node-name">Text Embeddings</div>
+            <div class="node-detail">all-MiniLM-L6-v2<br>384 dimensions</div>
+          </div>
+          <div class="arr">↓</div>
+        </div>
+        <div class="branch-col">
+          <div class="node">
+            <span class="node-icon">🔍</span>
+            <div class="node-name">BM25 Indexing</div>
+            <div class="node-detail">Okapi BM25<br>NLTK tokenizer</div>
+          </div>
+          <div class="arr">↓</div>
+        </div>
+        <div class="branch-col">
+          <div class="node">
+            <span class="node-icon">🧠</span>
+            <div class="node-name">LLM Entity Extraction</div>
+            <div class="node-detail">GPT-4o-mini<br>Nodes + Relations</div>
+          </div>
+          <div class="arr">↓</div>
+        </div>
+      </div>
+    </div><!-- /p1 -->
+
+    <div class="connector"><div class="connector-dot">↓</div></div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SHARED STORAGE LAYER                      -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="phase pdb">
+      <div class="phase-tag">🗄️ Shared Storage</div>
+      <div class="phase-title">Database Layer</div>
+      <div class="db-row">
+        <div class="node node-db">
+          <span class="node-icon">🔵</span>
+          <div class="node-name">Qdrant Vector DB</div>
+          <div class="node-detail">HNSW M=32<br>ef_construct=200</div>
+          <span class="badge b-blue">port 6333</span>
+        </div>
+        <div class="node node-db">
+          <span class="node-icon">📚</span>
+          <div class="node-name">BM25 Index</div>
+          <div class="node-detail">In-memory<br>top_k = 50</div>
+          <span class="badge b-blue">runtime</span>
+        </div>
+        <div class="node node-db">
+          <span class="node-icon">🕸️</span>
+          <div class="node-name">Neo4j Graph DB</div>
+          <div class="node-detail">Nodes + Edges<br>APOC plugin</div>
+          <span class="badge b-blue">port 7687</span>
+        </div>
+      </div>
+    </div><!-- /pdb -->
+
+    <div class="connector"><div class="connector-dot">↓</div></div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- DOCKER DEPLOYMENT                         -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="phase pdocker">
+      <div class="phase-tag">🐳 Deployment</div>
+      <div class="phase-title">Docker Compose</div>
+      <div class="docker-row">
+        <span class="docker-cmd">docker compose up -d</span>
+        <span class="arr" style="color:#22d3ee;">→</span>
+        <div class="docker-chip">rag-web<br><span style="color:#94a3b8;font-size:0.65rem;">FastAPI :8000</span></div>
+        <div class="docker-chip">rag-qdrant<br><span style="color:#94a3b8;font-size:0.65rem;">Vector DB :6333</span></div>
+        <div class="docker-chip">rag-neo4j<br><span style="color:#94a3b8;font-size:0.65rem;">Graph DB :7474</span></div>
+      </div>
+    </div><!-- /pdocker -->
+
+    <div class="connector"><div class="connector-dot">↓</div></div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- PHASE 2 — ONLINE QUERY PIPELINE           -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="phase p2">
+      <div class="phase-tag">🚀 Phase 2</div>
+      <div class="phase-title">Online Query Pipeline <span class="phase-sub">— Real-time per Request</span></div>
+
+      <!-- User query + router -->
+      <div class="flow-row">
+        <div class="node">
+          <span class="node-icon">👤</span>
+          <div class="node-name">User Query</div>
+          <div class="node-detail">Web UI / API</div>
+        </div>
+        <span class="arr">→</span>
+        <div class="node" style="background:rgba(245,158,11,0.09);border-color:rgba(245,158,11,0.35);">
+          <span class="node-icon">🔀</span>
+          <div class="node-name">Query Router</div>
+          <div class="node-detail">Intent Classification<br>GPT-4o-mini</div>
+        </div>
+      </div>
+
+      <div class="arr-down">↓</div>
+
+      <!-- Two paths side by side -->
+      <div class="two-path">
+        <!-- Path A: Hybrid -->
+        <div class="path-box path-box-a">
+          <div class="path-label path-label-a">Path A · Hybrid / Factual</div>
+          <div class="node">
+            <span class="node-icon">🔄</span>
+            <div class="node-name">Query Transformation</div>
+            <div class="node-detail">HyDE · Decomposition</div>
+          </div>
+          <div class="arr">↓</div>
+          <div class="twin-nodes">
+            <div class="node" style="min-width:90px;">
+              <span class="node-icon">🔵</span>
+              <div class="node-name">Vector Search</div>
+              <span class="badge b-blue">top 50</span>
+            </div>
+            <div class="node" style="min-width:90px;">
+              <span class="node-icon">🔍</span>
+              <div class="node-name">BM25 Search</div>
+              <span class="badge b-blue">top 50</span>
+            </div>
+          </div>
+          <div class="arr">↓</div>
+          <div class="node" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.4);">
+            <span class="node-icon">⚡</span>
+            <div class="node-name">RRF Fusion</div>
+            <div class="node-detail">k = 60</div>
+            <span class="badge b-blue">→ top 50 merged</span>
+          </div>
+        </div>
+
+        <!-- Path B: GraphRAG -->
+        <div class="path-box path-box-b">
+          <div class="path-label path-label-b">Path B · Analytical / GraphRAG</div>
+          <div class="node" style="background:rgba(16,185,129,0.09);border-color:rgba(16,185,129,0.35);">
+            <span class="node-icon">🕸️</span>
+            <div class="node-name">GraphRAG Search</div>
+            <div class="node-detail">NL → Cypher Query<br>Entity Linking</div>
+          </div>
+          <div class="arr">↓</div>
+          <div class="node" style="background:rgba(16,185,129,0.07);border-color:rgba(16,185,129,0.25);">
+            <span class="node-icon">🔗</span>
+            <div class="node-name">Graph Traversal</div>
+            <div class="node-detail">Neo4j Bolt Protocol</div>
+            <span class="badge b-green">→ top 10</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arr-down">↓ &nbsp;<span style="font-size:0.65rem;color:#64748b;">Merge both paths</span></div>
+
+      <!-- Post-retrieval -->
+      <div class="post-box">
+        <div class="post-label">Post-Retrieval Processing</div>
+
+        <div class="node-merge">
+          <div class="node-name">🔗 Merge Candidates</div>
+          <div style="font-size:0.68rem;color:#64748b;margin-top:4px;font-family:'JetBrains Mono',monospace;">50 hybrid + 10 graph</div>
+          <span class="badge b-amber">~60 chunks</span>
+        </div>
+
+        <div class="arr">↓</div>
+
+        <div class="node node-purple">
+          <span class="node-icon">⚖️</span>
+          <div class="node-name">Cross-Encoder Reranker</div>
+          <div class="node-detail">ms-marco-MiniLM-L-6-v2</div>
+          <span class="badge b-purple">→ top 20</span>
+        </div>
+
+        <div class="arr">↓</div>
+
+        <div class="node node-purple">
+          <span class="node-icon">🌈</span>
+          <div class="node-name">MMR Diversity Filter</div>
+          <div class="node-detail">λ = 0.5 &nbsp;(relevance vs. diversity)</div>
+          <span class="badge b-purple">→ top 10</span>
+        </div>
+
+        <div class="arr">↓</div>
+
+        <div class="node" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.4);min-width:200px;">
+          <span class="node-icon">🤖</span>
+          <div class="node-name">GPT-4o-mini Generator</div>
+          <div class="node-detail">Prompt Assembly + Generation</div>
+        </div>
+
+        <div class="arr">↓</div>
+
+        <div class="node-answer">
+          <div class="node-name">✅ Final Answer + Source Citations</div>
+          <div style="font-size:0.7rem;color:#64748b;margin-top:5px;">Web UI · FastAPI /api/query · CLI</div>
+        </div>
+      </div>
+    </div><!-- /p2 -->
+
+  </div><!-- /pipeline -->
+
+  <!-- ─── METRICS ─── -->
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-val" style="color:#10b981;">0.8333</div>
+      <div class="metric-lbl">Answer Faithfulness</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" style="color:#6366f1;">0.4130</div>
+      <div class="metric-lbl">Context Relevance</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" style="color:#f59e0b;">4.91s</div>
+      <div class="metric-lbl">Avg. Latency</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" style="color:#22d3ee;">20</div>
+      <div class="metric-lbl">Docs Indexed</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" style="color:#a78bfa;">3</div>
+      <div class="metric-lbl">Docker Services</div>
+    </div>
+  </div>
+
+</body>
+</html>

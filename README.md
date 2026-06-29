@@ -84,7 +84,7 @@ flowchart TD
         GraphDB --> |Top 10 Results| Merge
 
         %% Post-Retrieval Pipeline
-        Merge --> |50-60 Chunks| Rerank[Cross-Encoder Reranker]
+        Merge --> |60 Chunks| Rerank[Cross-Encoder Reranker]
         Rerank --> |Top 20 Chunks| MMR[MMR Diversity Filter]
         MMR --> |Top 10 Chunks| Context[Final Context]
     end

@@ -24,7 +24,6 @@ from pydantic import BaseModel
 from src.config import settings
 from src.orchestrator.pipeline import RAGPipeline
 
-
 # ── Lifespan: initialize pipeline on startup ───────────────────────────────
 
 pipeline: Optional[RAGPipeline] = None

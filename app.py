@@ -21,7 +21,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
+# pyrefly: ignore [missing-import]
 from src.config import settings
+# pyrefly: ignore [missing-import]
 from src.orchestrator.pipeline import RAGPipeline
 
 # ── Lifespan: initialize pipeline on startup ───────────────────────────────

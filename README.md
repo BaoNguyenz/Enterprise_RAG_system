@@ -289,6 +289,8 @@ uv run python scripts/test_query_transformation.py
 # Verify Task 4: Cross-Encoder Reranking and MMR (no API key needed)
 uv run python scripts/test_post_retrieval.py
 
-# Verify Task 5: Neo4j Graph Database extraction and GraphRAG queries queries
+# Verify Task 5: Neo4j Graph Database extraction and GraphRAG queries
+# Verify Task 5: Neo4j Graph Database extraction and GraphRAG queries
+
 uv run python scripts/test_graph.py
 ```

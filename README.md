@@ -280,7 +280,7 @@ The RAG pipeline is evaluated end-to-end using Ragas-like metrics (Context Relev
 The project includes test scripts for verifying each task separately:
 
 ```bash
-# Verify Task 2: Vector + BM25 Hybrid Search (no API key needed)
+# Verify Task 2: Vector + BM25 Hybrid Search
 uv run python scripts/test_hybrid_search.py
 
 # Verify Task 3: Query Routing, HyDE, and Decomposition

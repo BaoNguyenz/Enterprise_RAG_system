@@ -287,6 +287,7 @@ uv run python scripts/test_hybrid_search.py
 uv run python scripts/test_query_transformation.py
 
 # Verify Task 4: Cross-Encoder Reranking and MMR
+# Verify Task 4: Cross-Encoder Reranking and MMR
 uv run python scripts/test_post_retrieval.py
 
 # Verify Task 5: Neo4j Graph Database extraction and GraphRAG queries

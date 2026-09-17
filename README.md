@@ -280,18 +280,15 @@ The RAG pipeline is evaluated end-to-end using Ragas-like metrics (Context Relev
 The project includes test scripts for verifying each task separately:
 
 ```bash
-# Verify Task 2: Vector + BM25 Hybrid Search
-# Verify Task 2: Vector + BM25 Hybrid Search
-
+# Verify Task 1: Vector + BM25 Hybrid Search
 uv run python scripts/test_hybrid_search.py
 
-# Verify Task 3: Query Routing, HyDE, and Decomposition
+# Verify Task 2: Query Routing, HyDE, and Decomposition
 uv run python scripts/test_query_transformation.py
 
-# Verify Task 4: Cross-Encoder Reranking and MMR
+# Verify Task 3: Cross-Encoder Reranking and MMR
 uv run python scripts/test_post_retrieval.py
 
-# Verify Task 5: Neo4j Graph Database extraction and GraphRAG queries
-
+# Verify Task 4: Neo4j Graph Database extraction and GraphRAG queries
 uv run python scripts/test_graph.py
 ```

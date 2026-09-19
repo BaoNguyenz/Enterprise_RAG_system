@@ -282,6 +282,8 @@ The project includes test scripts for verifying each task separately:
 ```bash
 # Verify Task 1: Vector + BM25 Hybrid Search
 uv run python scripts/test_hybrid_search.py
+uv run python scripts/test_hybrid_search.py
+
 
 # Verify Task 2: Query Routing, HyDE, and Decomposition
 uv run python scripts/test_query_transformation.py

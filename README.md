@@ -298,6 +298,5 @@ uv run python scripts/test_hybrid_search.py
 # Verify Task 2: Query Routing, HyDE, and Decomposition
 uv run python scripts/test_query_transformation.py
 
-# Verify Task 3: Cross-Encoder Reranking and MMR
-uv run python scripts/test_post_retrieval.py
+
 

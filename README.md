@@ -292,7 +292,6 @@ uv run python scripts/test_post_retrieval.py
 
 # Verify Task 4: Neo4j Graph Database extraction and GraphRAG queries
 uv run python scripts/test_graph.py
-uv run python scripts/test_graph.py
 ```
 
 
